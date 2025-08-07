@@ -6,6 +6,8 @@ This project is a complete Python-based solution designed to automate the entire
 
 Built with modularity and reusability in mind, this system enables developers and DevOps teams to launch, configure, and manage EC2 instances with minimal manual intervention.
 
+QuickNote: Make Sure to Configre First using AWS Cli " The command is: aws configure : Enter your Details
+
 🧠 Key Features & Functionalities
 1. Dynamic EC2 Instance Creation
 Supports launching single or multiple instances in one flow
