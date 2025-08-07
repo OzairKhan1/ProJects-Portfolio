@@ -231,7 +231,10 @@ class EC2Manager:
     
         # How many instances
         count = int(input("How many instances to launch?: ").strip())
-    
+
+        #Choose Type
+        instance_type = input("Enter the instance type (e.g., t2.micro): ").strip()
+        
         # Key Name
         key_name = input("Enter key pair name to use: ").strip()
         self.create_and_save_key(key_name)
@@ -257,7 +260,7 @@ class EC2Manager:
                 ImageId=image_id,
                 MinCount=count,
                 MaxCount=count,
-                InstanceType="t2.micro",
+                InstanceType=instance_type,
                 KeyName=key_name,
                 TagSpecifications=[{
                     'ResourceType': 'instance',
@@ -489,4 +492,5 @@ class EC2Manager:
 if __name__ == '__main__':
    manager = EC2Manager(input("Default Area is [ us-east-1 ]: Do you want to proceed with this or change it: ") or "us-east-1")
    manager.show_menu()
+
 
