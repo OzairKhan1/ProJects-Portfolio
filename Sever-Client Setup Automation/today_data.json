@@ -1,0 +1,32 @@
+{
+  "system_id1": [
+    "https://chat.openai.com/",
+    "https://gemini.google.com/",
+    "https://www.anthropic.com/claude/",
+    "https://x.com/grok"
+  ],
+  "system_id2": [
+    "https://www.canva.com/magic-studio/",
+    "https://fathom.video/",
+    "https://www.synthesia.io/",
+    "https://www.perplexity.ai/"
+  ],
+  "system_id3": [
+    "https://deepseek.ai/",
+    "https://www.mistral.ai/",
+    "https://www.midjourney.com/",
+    "https://chat.openai.com/"
+  ],
+  "system_id4": [
+    "https://runway.com/",
+    "https://www.grammarly.com/",
+    "https://www.jasper.ai/",
+    "https://www.canva.com/"
+  ],
+  "system_id5": [
+    "https://n8n.io/",
+    "https://manus.com/",
+    "https://research.google.com/notebooklm/",
+    "https://www.descript.com/"
+  ]
+}

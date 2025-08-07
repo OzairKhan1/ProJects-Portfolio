@@ -1,0 +1,43 @@
+ Deploying Flask Server as a systemd Service with Gunicorn
+
+ 🧠 Requirements
+Ubuntu/Linux server
+Python 3.x installed
+gunicorn installed globally or inside a virtual environment
+MyFlaskServer.py Flask app in working directory
+token.txt and today_data.json present in the same directory as MyFlaskServer.py
+
+1: Install gunicorn 
+2: Run this command: which gunicorn            : This is very important : The Path will be used in .service file
+3. 📝 Create systemd Service File
+sudo nano /etc/systemd/system/MyFlaskServer.service       #MyFlaskSever is just the name of my app
+4: Paste These Contents to the above opened file
+
+[Unit]
+Description=Flask Server
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/App              #App is the directory where you app data is located
+ExecStart=/home/ubuntu/.local/bin/gunicorn -w 4 -b 0.0.0.0:8000 MyFlaskServer:app   #MyFlaskSever is the name of Script
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+5: Run the below commands 1 by 1
+sudo systemctl daemon-reexec       # Optional: if any major changes
+sudo systemctl daemon-reload
+sudo systemctl enable MyFlaskServer.service
+sudo systemctl start MyFlaskServer.service
+
+6: To Check the status of Service use this commnad: sudo systemctl status MyFlaskServer.service
+
+
+---------------------------------- How to enable/disbale Services ---------------------------
+1: sudo systemctl start MyFlaskServer         # Just start the service
+2: sudo systemctl enable MyFlaskServer         # enabled as the system boots
+3: sudo systemctl stop MyFlaskServer
+4: sudo systemctl disable MyFlaskServer
+
