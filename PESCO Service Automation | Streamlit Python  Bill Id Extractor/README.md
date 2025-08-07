@@ -1,4 +1,4 @@
-# DataScrapper for Pesco
+# DataScrapper for PESCO 
 Gui base fully automated Application to Extract the Customer id from account numbers for Pesco customers 
 Step 1: Download the Zip File and Unzip it 
 
