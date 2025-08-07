@@ -202,8 +202,8 @@ class EC2Manager:
             "Amazon Linux 2023": "ami-0f403e3180720dd7e",
             "Amazon Linux 2": "ami-0c101f26f147fa7fd",
             "Red Hat 9": "ami-05a4db8bdfe937387",
-            "Debian 12": "ami-0f5daaa3a7fb3378b"
-            "macOs": "ami-043cfcc8b0832d11a"
+            "Debian 12": "ami-0f5daaa3a7fb3378b",
+            "macOs": "ami-043cfcc8b0832d11a",
             "Windows": "ami-0c9fb5d338f1eec43"
             
         }
@@ -489,3 +489,4 @@ class EC2Manager:
 if __name__ == '__main__':
    manager = EC2Manager(input("Default Area is [ us-east-1 ]: Do you want to proceed with this or change it: ") or "us-east-1")
    manager.show_menu()
+
