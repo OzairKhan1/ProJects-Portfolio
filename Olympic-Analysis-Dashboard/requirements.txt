@@ -1,0 +1,6 @@
+Streamlit  == 1.37.0
+Pandas == 2.2.2
+Plotly == 5.23.0
+Seaborn == 0.13.2
+Matplotlib == 3.9.0
+Scipy == 1.14.0
