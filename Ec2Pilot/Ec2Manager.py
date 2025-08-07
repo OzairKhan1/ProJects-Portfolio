@@ -232,9 +232,8 @@ class EC2Manager:
         # How many instances
         count = int(input("How many instances to launch?: ").strip())
 
-        #Choose Type
+        #Choose a type
         instance_type = input("Enter the instance type (e.g., t2.micro): ").strip()
-        
         # Key Name
         key_name = input("Enter key pair name to use: ").strip()
         self.create_and_save_key(key_name)
@@ -268,7 +267,7 @@ class EC2Manager:
                 }]
             )
             instance_ids = [instance.id for instance in instances]
-            print(f"🚀 Successfully launched {count} instance(s) with AMI: {image_id}")
+            print(f"🚀 Successfully launched {count} instance(s)")
             print("Instance IDs:", ', '.join(instance_ids))
             
         except Exception as e:
@@ -492,5 +491,3 @@ class EC2Manager:
 if __name__ == '__main__':
    manager = EC2Manager(input("Default Area is [ us-east-1 ]: Do you want to proceed with this or change it: ") or "us-east-1")
    manager.show_menu()
-
-
