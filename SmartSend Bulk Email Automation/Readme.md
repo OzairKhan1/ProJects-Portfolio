@@ -13,3 +13,7 @@ From academic outreach to business updates, **SmartSend helps you send multiple 
 - **Attachments Support** — Attach relevant files for each recipient without manual effort.  
 - **Clean UI** — Minimal design with inline help, spacing fixes, and better label alignment.  
 - **Secure** — SMTP authentication with app passwords (e.g., Gmail, Outlook).
+
+🤝 Contributing
+Contributions, issues, and feature requests are welcome!
+Feel free to fork the repo and submit pull requests.
