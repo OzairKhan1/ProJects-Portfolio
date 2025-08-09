@@ -331,6 +331,22 @@ class EC2Manager:
         tag_key = None
         if group_by == 'tag':
             tag_key = input("🏷️ Enter tag key to group by (e.g., Env): ").strip()
+            tag_value = input("🎯 Enter tag value to filter by (or press Enter to match any value): ").strip()
+
+    # Filter instances by tag
+            filtered = [
+                inst for inst in filtered
+                if any(
+                    t['Key'] == tag_key and
+                    (tag_value == '' or t['Value'] == tag_value)
+                    for t in inst.get('Tags', [])
+                )
+            ]
+        
+            if not filtered:
+                print(f"⚠️ No running instances found with tag {tag_key}={tag_value or '*'}")
+                return
+
 
         # Get unique AMI IDs
         image_ids = list(set(inst['ImageId'] for inst in filtered))
