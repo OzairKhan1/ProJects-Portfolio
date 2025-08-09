@@ -1,3 +1,7 @@
+# A fully customizable dynamic script used to list, start, stop, and terminate EC2 instances.
+# Accurately checks the current state before performing any operation.
+# Supports operations on a single instance, multiple instances, or all instances at once.
+
 import boto3
 
 ec2 = boto3.client("ec2")
