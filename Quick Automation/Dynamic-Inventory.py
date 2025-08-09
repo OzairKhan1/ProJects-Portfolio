@@ -1,3 +1,6 @@
+Ansible-Ready Fully Customizable Dynamic Inventory
+Create inventories based on AMI, tag, or a combination of tag and value.
+
 import boto3
 
 ec2 = boto3.client("ec2")
