@@ -1,5 +1,5 @@
-Ansible-Ready Fully Customizable Dynamic Inventory
-Create inventories based on AMI, tag, or a combination of tag and value.
+# Ansible-Ready Fully Customizable Dynamic Inventory
+# Create inventories based on AMI, tag, or a combination of tag and value.
 
 import boto3
 
