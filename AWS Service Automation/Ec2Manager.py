@@ -130,8 +130,15 @@ class EC2Manager:
         print(f"Terminating instance: {instance_id}")
         self.ec2.terminate_instances(InstanceIds=[instance_id])
 
-    #15
-    def rename_instances(self):
+    #15: This is Helper function for RenameInstances
+    def get_instance_name(self, instance):
+        """Return the Name tag of an instance, or 'Unnamed' if not set."""
+        return next(
+            (tag['Value'] for tag in instance.get('Tags', []) if tag['Key'] == 'Name'),
+            'Unnamed'
+        )
+
+    def rename_instances(self,instances):
         instances = self.get_all_instances()
         if not instances:
             print("No instances found to rename.")
@@ -485,7 +492,7 @@ class EC2Manager:
             elif choice == '13':
                 self.prompt_instance_action('terminate')
             elif choice == '14':
-                self.rename_instance(instances)
+                self.rename_instances(instances)
             elif choice == '15':
                 self.list_ebs_volumes()
             elif choice == '16':
@@ -502,8 +509,15 @@ class EC2Manager:
                 self.generate_inventory()
             else:
                 print("Invalid option.")
+            choice = input("Do you want to proceed or exit the program? (yes/no):").strip().lower()
+            if choice != 'yes':
+                break
+            else:
+                pass
                 
 
 if __name__ == '__main__':
-   manager = EC2Manager(input("Default Area is [ us-east-1 ]: Do you want to proceed with this or change it: ") or "us-east-1")
-   manager.show_menu()
+    manager = EC2Manager(input("Default Area is [ us-east-1 ]: Do you want to proceed with this or change it: ") or "us-east-1")
+    manager.show_menu()
+    
+     
