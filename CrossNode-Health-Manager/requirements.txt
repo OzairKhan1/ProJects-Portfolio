@@ -1,0 +1,14 @@
+# You must need to Use Aws Configuration for Boto3 to Access you account 
+
+
+# Core Ansible
+ansible>=9.0.0
+
+# For email sending via Ansible (SMTP)
+community.general>=8.5.0
+
+# For AWS dynamic inventory and EC2 interactions
+boto3>=1.34.0
+botocore>=1.34.0
+
+
