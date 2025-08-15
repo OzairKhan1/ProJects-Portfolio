@@ -1,0 +1,32 @@
+- name: Run Windows report
+  hosts: localhost
+  tasks:
+    - name: Execute Windows report playbook
+      command: ansible-playbook -i windows_inventory.ini win_sys_report.yml
+
+- name: Run Linux report
+  hosts: localhost
+  tasks:
+    - name: Execute Linux report playbook
+      command: ansible-playbook -i dynamic_inventory.ini collect_system_report.yml
+
+- name: Send email
+  hosts: localhost
+  tasks:
+    - name: Execute SendMail playbook
+      command: ansible-playbook -i localhost sendMail.yml
+
+
+#   Why We can't Just Import: The Reason is Ansible doesn't allow switching Inventory during Execution and They ARe running on 
+#   differnt Inventory. We can combine to 1 Inventory but Make sure the Groups Are available as per the Inventory and then use the below commented .yaml Script ========================================
+#
+
+        #---
+        #- import_playbook: collect_system_report.yml
+        #  hosts: linux
+        #
+        #- import_playbook: win_sys_report.yml
+        #  hosts: windows
+        #
+        #- import_playbook: SendMail.yml
+        #  hosts: localhost

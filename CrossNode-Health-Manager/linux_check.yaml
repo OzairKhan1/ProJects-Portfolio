@@ -1,0 +1,10 @@
+---
+- name: Check Connectivity (skip Windows from this ini)
+  hosts: all
+  gather_facts: no
+
+  tasks:
+    - name: Ping Linux hosts only
+      ansible.builtin.ping:
+      when: "'windows' not in group_names"
+
