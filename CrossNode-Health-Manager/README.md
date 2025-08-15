@@ -57,7 +57,7 @@ Feel free to fork, improve, and reach out for collaboration or questions!
 ------------------------------------------------------ Step By Step Guide For This Porject --------------------------------------------------------
 
 > **Note:** If Windows nodes are created, you need to enable ports and configure the firewall for **WinRM**.  
-> This is done using the script **`Setup-WinRM-For-Ansible`**.  
+> This is done using the script **`Setup-WinRM-For-Ansible.ps1`**.  
 > Please add this script while launching Windows EC2 instances — it will automatically handle the initial configuration with no manual hassle.
 
 ---
