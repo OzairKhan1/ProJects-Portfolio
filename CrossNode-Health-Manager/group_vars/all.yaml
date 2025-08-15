@@ -1,0 +1,6 @@
+smtp_server: "smtp.gmail.com"
+smtp_port: 587
+email_user: "example@gmail.com"       # Your Gmail
+email_pass: "Your App Password"          # Use Gmail App Password, not your normal password
+alert_recipient: "Reciepient@mail.com" # Receiver email address
+sender_name: "Your Name or any name"
