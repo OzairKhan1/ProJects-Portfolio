@@ -1,6 +1,6 @@
 # Cross-Platform Automated System Information Collection on AWS (Windows & Linux)
 
-**An end-to-end automation framework for provisioning AWS EC2 instances and collecting detailed system insights from both Windows and Linux servers — all fully automated, scheduled, and alert-enabled.**
+** An end-to-end automation framework for provisioning AWS EC2 instances and collecting detailed system insights from both Windows and Linux servers — all fully automated, scheduled, and alert-enabled.**
 
 ---
 
