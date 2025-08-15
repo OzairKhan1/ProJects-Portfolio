@@ -61,6 +61,7 @@ Feel free to fork, improve, and reach out for collaboration or questions!
 > Please add this script while launching Windows EC2 instances — it will automatically handle the initial configuration with no manual hassle.
 
 ---
+**Please Make The Necessary Changes to EveryFile**
 
 ## Steps
 
