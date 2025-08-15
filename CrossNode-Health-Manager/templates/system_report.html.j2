@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>System Report</title>
+  <style>
+    :root{
+      --main-blue: #004085;       /* main section header */
+      --section-blue: #0056b3;    /* section header / sticky cols */
+      --cpu-accent: #2563EB;      /* cpu subheader */
+      --mem-accent: #059669;      /* memory subheader */
+      --disk-accent: #0EA5E9;     /* disk subheader */
+      --sub-bg: #e9eef6;          /* light subheader bg fallback */
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 14px;
+      background: #f6f8fa;
+    }
+
+    h1 {
+      margin: 0 0 12px 0;
+      padding: 12px;
+      background: var(--main-blue);
+      color: #fff;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .table-container {
+      overflow-x: auto;           /* horizontal scroll */
+      border-radius: 6px;
+      background: white;
+      padding: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+
+    /* table uses intrinsic width so scrolling works reliably */
+    table {
+      border-collapse: collapse;
+      width: max-content;
+      min-width: 1100px; /* force scroll for small screens */
+    }
+
+    th, td {
+      border: 1px solid #e0e3e8;
+      padding: 8px 10px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    /* --- Top headers (two header rows) --- */
+    thead tr.header-main th {
+      position: sticky;
+      top: 0;
+      background: var(--main-blue);
+      color: #fff;
+      z-index: 6;
+      text-align: center;
+    }
+
+    thead tr.header-sect th {
+      position: sticky;
+      top: 40px; /* sits below the main header row */
+      z-index: 5;
+      color: #fff;
+      text-align: center;
+    }
+
+    /* per-section accent on subcolumns (second header row) */
+    thead tr.header-sect th.sub-cpu { background: var(--cpu-accent); }
+    thead tr.header-sect th.sub-mem { background: var(--mem-accent); }
+    thead tr.header-sect th.sub-disk{ background: var(--disk-accent); }
+
+    /* sticky left columns: Sequence and Hostname */
+    th.sticky-col, td.sticky-col {
+      position: sticky;
+      left: 0;
+      min-width: 56px;
+      max-width: 56px;
+      background: var(--section-blue);
+      color: #fff;
+      z-index: 7; /* above other cells */
+      text-align: center;
+      font-weight: 600;
+    }
+
+    th.sticky-col-2, td.sticky-col-2 {
+      position: sticky;
+      left: 56px; /* width of first sticky col */
+      min-width: 220px;
+      max-width: 420px;
+      background: var(--section-blue);
+      color: #fff;
+      z-index: 7;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    /* ensure header sticky cells (the left headers) sit above body cells */
+    thead tr.header-main th.sticky-col { top: 0; z-index: 10; }
+    thead tr.header-sect th.sticky-col { top: 40px; z-index: 10; }
+    thead tr.header-main th.sticky-col-2 { top: 0; z-index: 10; }
+    thead tr.header-sect th.sticky-col-2 { top: 40px; z-index: 10; }
+
+    /* row striping and hover */
+    tbody tr:nth-child(even) { background: #fbfcfd; }
+    tbody tr:hover { background: #f3f7ff; }
+
+    /* small cells align center for numeric values */
+    td.center { text-align: center; }
+
+    /* fallback if a column gets too long */
+    td.truncate { max-width: 420px; overflow: hidden; text-overflow: ellipsis; }
+  </style>
+</head>
+<body>
+
+<h1>System Report</h1>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <!-- main header row: sticky at top -->
+      <tr class="header-main">
+        <th class="sticky-col" rowspan="2">#</th>
+        <th class="sticky-col-2" rowspan="2">Hostname</th>
+
+        <th colspan="5">CPU</th>
+        <th colspan="5">Memory</th>
+        <th colspan="4">Disk</th>
+      </tr>
+
+      <!-- secondary section/subcolumn row (sticky below main) -->
+      <tr class="header-sect">
+        <!-- CPU subcolumns -->
+        <th class="sub-cpu">Model</th>
+        <th class="sub-cpu">Cores/CPU</th>
+        <th class="sub-cpu">CPU Count</th>
+        <th class="sub-cpu">Used %</th>
+        <th class="sub-cpu">Free %</th>
+
+        <!-- Memory subcolumns -->
+        <th class="sub-mem">Total MB</th>
+        <th class="sub-mem">Used MB</th>
+        <th class="sub-mem">Free MB</th>
+        <th class="sub-mem">Swap Total MB</th>
+        <th class="sub-mem">Swap Free MB</th>
+
+        <!-- Disk subcolumns -->
+        <th class="sub-disk">Mount</th>
+        <th class="sub-disk">Total (GB)</th>
+        <th class="sub-disk">Used (GB)</th>
+        <th class="sub-disk">Free (GB)</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {# reports is a list of per-host dicts (from your playbook) #}
+      {% for report in reports %}
+      <tr>
+        <!-- sequence + exact hostname from report.hostname -->
+        <td class="sticky-col">{{ loop.index }}</td>
+        <td class="sticky-col-2 truncate" title="{{ report.hostname }}">{{ report.hostname }}</td>
+
+        <!-- CPU -->
+        <td class="truncate">{{ report.cpu.processor_model | default('N/A') }}</td>
+        <td class="center">{{ report.cpu.cores_per_cpu | default('N/A') }}</td>
+        <td class="center">{{ report.cpu.cpu_count | default('N/A') }}</td>
+        <td class="center">{{ (report.cpu.cpu_used_percent | float | round(2)) if report.cpu.cpu_used_percent is defined else 'N/A' }}</td>
+        <td class="center">{{ (report.cpu.cpu_free_percent | float | round(2)) if report.cpu.cpu_free_percent is defined else 'N/A' }}</td>
+
+        <!-- Memory -->
+        <td class="center">{{ report.memory.total_mb | default('N/A') }}</td>
+        <td class="center">{{ report.memory.used_mb | default('N/A') }}</td>
+        <td class="center">{{ report.memory.free_mb | default('N/A') }}</td>
+        <td class="center">{{ report.memory.swap_total_mb | default('N/A') }}</td>
+        <td class="center">{{ report.memory.swap_free_mb | default('N/A') }}</td>
+
+        <!-- Disk (primary mount) -->
+        <td class="truncate">{{ report.disk.primary_mount.mount_point | default('N/A') }}</td>
+        <td class="center">{{ report.disk.primary_mount.total_gb | default('0') }}</td>
+        <td class="center">{{ report.disk.primary_mount.used_gb | default('0') }}</td>
+        <td class="center">{{ report.disk.primary_mount.free_gb | default('0') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>
+
