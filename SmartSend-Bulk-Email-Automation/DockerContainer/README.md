@@ -9,4 +9,7 @@ docker pull ozairkhan1/smartsend:latest
    docker run -d -p 8501:8501 -v smartsend_logs:/SmartSend/logs ozairkhan1/smartsend:latest
    ```
 **3: Access the application in your browser**:  
-        http://<your-server-ip>:8501
+```bash
+   http://<your-server-ip>:8501
+   ```
+        
