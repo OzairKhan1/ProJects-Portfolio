@@ -13,10 +13,10 @@ docker pull ozairkhan1/smartsend:latest
    http://<your-server-ip>:8501
    ```
         
------------------- Optional Commands for Users, Commads Used While Building the Images ----------------------------------------------
+------------------ Optional Commands for Users, Commads Used While Building the Images ---------------------------------------  
 **1: Building the image**  
 ```bash
 docker build -t ozairkhan1/smartsend:latest .
-```bash
+```
 2: 
 
