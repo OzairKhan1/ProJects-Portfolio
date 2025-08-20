@@ -61,11 +61,14 @@ email_subject = ""
 email_body = ""
 col_names = []
 
-# --- File Upload ---
+# --- File Upload ----
+LOG_DIR = os.path.join(os.getcwd(), "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+
 if mode == "For Students":
     excel_file = st.file_uploader("Upload Excel file", type=['xlsx', 'xls'])
     cv_file = st.file_uploader("Upload your CV (PDF)", type=['pdf'])
-    done_file = "sent_emails_log.csv"
+    done_file = os.path.join(LOG_DIR, "sent_emails_log.csv")
 
     if excel_file:
         df = pd.read_excel(excel_file)
@@ -75,7 +78,7 @@ if mode == "For Students":
         col_names = df.columns.tolist()
 
 if mode == "Customized Email":
-    done_file = "sent_custom_log.csv"
+    done_file = os.path.join(LOG_DIR, "sent_custom_log.csv")
     excel_file = st.file_uploader("Upload Excel file", type=['xlsx', 'xls'])
     # === ALLOWED CHANGE: allow single/multiple attachments for Customized Email ===
     attachment_files = st.file_uploader("Upload Attachment(s)", type=None, accept_multiple_files=True)
