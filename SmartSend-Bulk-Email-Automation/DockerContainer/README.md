@@ -14,9 +14,11 @@ docker pull ozairkhan1/smartsend:latest
    ```
         
 ------------------ Optional Commands for Users, Commads Used While Building the Images ---------------------------------------  
-**1: Building the image**  
+**4: Building the image**  
 ```bash
 docker build -t ozairkhan1/smartsend:latest .
 ```
-2: 
-
+**5: Then Use the Push to the push the image to DockerHub**  
+```bash
+docker push ozairkhan1/smartsend:latest
+```
