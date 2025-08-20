@@ -1,4 +1,4 @@
-**Follow these 3 simple steps**  
+## Follow these 3 simple steps 
 
 **1: Pull the code from DockerHub using the command**:
 ```bash
