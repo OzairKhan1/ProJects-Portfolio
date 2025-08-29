@@ -1,0 +1,117 @@
+---
+- name: Collect system data from Linux machines
+  hosts: all
+  gather_facts: yes
+  vars:
+    reports_dir: "./reports"
+
+  tasks:
+    - name: Ensure reports directory exists on control node
+      local_action:
+        module: file
+        path: "{{ reports_dir }}"
+        state: directory
+        mode: '0755'
+      run_once: true
+
+    # ---------------- CPU Section ----------------
+    - name: Gather CPU usage for Linux
+      shell: mpstat 1 1 | awk '/Average/ && $2 ~ /all/ {print 100 - $NF}'
+      register: cpu_used_linux
+      changed_when: false
+
+    - name: Gather CPU info (hardware + usage)
+      set_fact:
+        cpu_info:
+          processor_model: "{{ ansible_facts.processor[-1] | default('unknown') }}"
+          cores_per_cpu: "{{ ansible_facts.processor_cores | default(omit) }}"
+          cpu_count: "{{ ansible_facts.processor_count | default(omit) }}"
+          cpu_used_percent: "{{ cpu_used_linux.stdout | default('0') }}"
+          cpu_free_percent: "{{ 100 - (cpu_used_linux.stdout | float | default(0)) }}"
+
+    # ---------------- Memory Section ----------------
+    - name: Gather Memory info (add Used)
+      set_fact:
+        memory_info:
+          total_mb: "{{ ansible_facts.memtotal_mb | default(0) | int }}"
+          free_mb: "{{ ansible_facts.memfree_mb | default(0) | int }}"
+          used_mb: "{{ (ansible_facts.memtotal_mb | default(0) | int) - (ansible_facts.memfree_mb | default(0) | int) }}"
+          swap_total_mb: "{{ ansible_facts.swaptotal_mb | default(0) | int }}"
+          swap_free_mb: "{{ ansible_facts.swapfree_mb | default(0) | int }}"
+
+    # ---------------- Disk Section ----------------
+    - name: Gather Disk info (primary mount + all mounts)
+      set_fact:
+        disk_info:
+          mounts: "{{ ansible_facts.mounts | default([]) }}"
+          primary_mount:
+            mount_point: "{{ (ansible_facts.mounts[0].mount) if (ansible_facts.mounts is defined and ansible_facts.mounts|length > 0) else '/' }}"
+            total_gb: >-
+              {% if ansible_facts.mounts is defined and ansible_facts.mounts|length > 0 %}
+                {{ (ansible_facts.mounts[0].size_total / 1024 / 1024 / 1024) | round(2) }}
+              {% else %}
+                0
+              {% endif %}
+            free_gb: >-
+              {% if ansible_facts.mounts is defined and ansible_facts.mounts|length > 0 %}
+                {{ (ansible_facts.mounts[0].size_available / 1024 / 1024 / 1024) | round(2) }}
+              {% else %}
+                0
+              {% endif %}
+            used_gb: >-
+              {% if ansible_facts.mounts is defined and ansible_facts.mounts|length > 0 %}
+                {{ ((ansible_facts.mounts[0].size_total - ansible_facts.mounts[0].size_available) / 1024 / 1024 / 1024) | round(2) }}
+              {% else %}
+                0
+              {% endif %}
+
+    # ---------------- Save Per-Host JSON ----------------
+    - name: Build report entry and write to control node (JSON)
+      local_action:
+        module: copy
+        content: "{{ {
+                    'hostname': inventory_hostname,
+                    'ansible_facts': {
+                      'nodename': ansible_facts.nodename | default(inventory_hostname)
+                    },
+                    'cpu': cpu_info,
+                    'memory': memory_info,
+                    'disk': disk_info
+                  } | to_nice_json }}"
+        dest: "{{ reports_dir }}/{{ inventory_hostname }}.json"
+      run_once: false
+
+# ---------------- HTML Report Builder ----------------
+- name: Build combined HTML report on control node and deploy to web root
+  hosts: localhost
+  gather_facts: no
+  vars:
+    reports_dir: "./reports"
+    html_dest: "/var/www/html/system_report.html"
+
+  tasks:
+    - name: Get list of per-host JSON reports
+      local_action:
+        module: command
+        argv:
+          - /bin/ls
+          - -1
+          - "{{ reports_dir }}"
+      register: report_files
+      failed_when: false
+      changed_when: false
+
+    - name: Read JSON report files into a list
+      set_fact:
+        all_reports: "{{ all_reports | default([]) + [ lookup('file', reports_dir + '/' + item) | from_json ] }}"
+      loop: "{{ report_files.stdout_lines | default([]) }}"
+
+    - name: Render HTML report (template)
+      template:
+        src: "templates/system_report.html.j2"
+        dest: "{{ html_dest }}"
+        mode: '0644'
+      vars:
+        reports: "{{ all_reports | sort(attribute='hostname') }}"
+      become: yes
+
