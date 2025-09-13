@@ -1,0 +1,18 @@
+ONly 2  Steps are Required to do this: 
+1: First Get the SecurityGroups id
+2: Run the query
+
+1: Replace the ami-id by the id of your instance
+
+aws ec2 describe-instances \
+  --instance-ids i-0a471cc970ffcd3b5 \
+  --query "Reservations[*].Instances[*].SecurityGroups[*].GroupId" \
+  --output text
+
+2: The Security Group will be Returened replace that id by the Current one:
+
+  aws ec2 authorize-security-group-ingress \
+  --group-id sg-0ffba5d0805a4060e\
+  --protocol tcp \
+  --port 3306 \
+  --cidr 0.0.0.0/0
