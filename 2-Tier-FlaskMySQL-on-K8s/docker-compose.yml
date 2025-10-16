@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    env_file:
+      - mysql.env
+    volumes:
+      - mysql-host-storage:/var/lib/mysql
+    networks:
+      - twotier
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  flask-app:
+    image: ozairkhan1/flask-mysql-app:v1
+    container_name: flask-app
+    ports:
+      - "5000:5000"
+    env_file:
+      - flask.env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - twotier
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  twotier:
+
+volumes:
+  mysql-host-storage:
+

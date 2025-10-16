@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>2 Tier App — Flask + MySQL</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+    :root{
+      --bg-1:#141e30;
+      --bg-2:#243b55;
+      --card-bg:#1e1e2f;
+      --muted:#b9c7d6;
+      --accent:#00c6ff;
+    }
+
+    html,body{height:100%;margin:0;font-family:'Poppins',sans-serif;background:linear-gradient(to right,var(--bg-1),var(--bg-2));color:#fff;}
+
+    /* reserve space for top tools bar */
+    body{display:flex;justify-content:center;align-items:flex-start;padding-top:128px;}
+
+    /* -------- TOP TOOLS BAR -------- */
+    .tools-bar {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      height: 104px;
+      background: rgba(30,30,47,0.96);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+      z-index:1200;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 10px 18px;
+    }
+
+    .tools-inner {
+      width:100%;
+      max-width:1240px; /* adjust to taste */
+      display:flex;
+      flex-wrap:nowrap;        /* keep single row visually */
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:6px;
+      overflow:hidden;         /* prevent scrollbars */
+    }
+
+    /* tool card: slightly wider so text is readable */
+    .tool-card {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:6px;
+      padding:6px 8px;
+      background: rgba(255,255,255,0.02);
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.03);
+      text-align:center;
+      min-width:0;
+      /* 11 tools -> use divisor 11 to try to fit; CSS media queries below will adjust */
+      flex: 0 1 calc((100% / 11) - 12px);
+      overflow:hidden;
+      white-space:normal; /* allow wrapping */
+    }
+
+    .tool-card img {
+      width:34px;
+      height:34px;
+      object-fit:contain;
+      flex:0 0 34px;
+    }
+
+    .tool-name { font-size:12px; font-weight:700; color:var(--accent); line-height:1.05; margin:0; }
+    .tool-purpose { font-size:11px; color:var(--muted); margin:0; line-height:1.05; }
+
+    /* ------------------- MAIN APP CARD (original look kept) ------------------- */
+    .container {
+      max-width: 820px;
+      width: 100%;
+      padding: 40px;
+      background: var(--card-bg);
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.08);
+      text-align: center;
+      margin: 0 16px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .container:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.8); }
+
+    .main-title {
+      font-size: 3rem;
+      font-weight:700;
+      color: var(--accent);
+      margin-bottom:8px;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .header-logos { display:inline-flex; gap:10px; margin-left:8px; align-items:center; }
+    .header-logos img{ width:34px; height:34px; object-fit:contain; }
+
+    .sub-title { font-size:1.5rem; color:#d1dbe6; margin-top:6px; margin-bottom:8px; font-weight:500; }
+    .creator { font-size:1rem; color:#ccc; margin-bottom:22px; font-style:italic; }
+
+    .messages { margin-bottom:20px; padding:15px; background:#2a2a3d; border-radius:10px; max-height:260px; overflow-y:auto; }
+    .messages p { padding:10px; background:#33334d; border-radius:8px; margin-bottom:8px; font-size:0.95rem; }
+
+    input[type="text"]{ width:100%; padding:12px; border:1px solid #444; background:#1a1a2e; color:#fff; border-radius:8px; font-size:16px; text-align:center; }
+    input[type="text"]:focus{ border-color:var(--accent); box-shadow:0 0 12px rgba(0,198,255,0.6); outline:none; }
+
+    input[type="submit"]{ width:100%; padding:12px; background: linear-gradient(135deg,var(--accent),#0072ff); color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:16px; transition:all 0.25s; }
+    input[type="submit"]:hover{ transform:translateY(-2px); box-shadow:0 0 20px rgba(0,198,255,0.5); }
+
+    .footer{ margin-top:20px; text-align:center; font-size:1rem; color:#fff; }
+    .footer strong{ color:var(--accent); }
+
+    /* ------------------- Responsiveness: adjust so all tools remain visible and text can wrap to second line ------------------- */
+    @media (max-width:1320px){
+      .tool-card{ flex:0 1 calc((100% / 11) - 10px); }
+      .tool-card img{ width:30px;height:30px; }
+      .tool-name{ font-size:11px; }
+      .tool-purpose{ font-size:10px; }
+    }
+    @media (max-width:1100px){
+      .tool-card{ flex:0 1 calc((100% / 11) - 8px); padding:5px 6px; }
+      .tool-card img{ width:26px;height:26px; }
+      .tool-name{ font-size:11px; }
+      .tool-purpose{ font-size:10px; }
+      body{ padding-top:112px; }
+    }
+    @media (max-width:880px){
+      /* let purposes move to second line and hide longer parts if still tight */
+      .tool-card{ flex:0 1 calc((100% / 11) - 6px); padding:4px 5px; }
+      .tool-card img{ width:22px;height:22px; }
+      .tool-name{ font-size:10px; }
+      .tool-purpose{ font-size:9px; }
+      body{ padding-top:100px; }
+    }
+    @media (max-width:700px){
+      /* final fallback: hide purpose text to get more room, keep names visible */
+      .tool-purpose{ display:none; }
+      .tool-card{ flex:0 1 calc((100% / 11) - 4px); }
+      .tool-name{ font-size:10px; }
+      .tool-card img{ width:18px;height:18px; }
+      body{ padding-top:92px; }
+      .container{ padding:28px; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- TOP HORIZONTAL TOOLS BAR -->
+  <div class="tools-bar" role="region" aria-label="Tools used">
+    <div class="tools-inner">
+      <!-- GitHub (bright) -->
+      <div class="tool-card" title="GitHub — Code Hosting">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/github.svg" alt="GitHub" style="filter: invert(1);">
+        <div class="tool-name">GitHub</div>
+        <div class="tool-purpose">Code Hosting</div>
+      </div>
+
+      <!-- Terraform -->
+      <div class="tool-card" title="Terraform — Infra as Code">
+        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/terraform/terraform-original.svg" alt="Terraform">
+        <div class="tool-name">Terraform</div>
+        <div class="tool-purpose">Infra as Code</div>
+      </div>
+
+      <!-- AWS -->
+      <div class="tool-card" title="AWS — Cloud Provider">
+        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original-wordmark.svg" alt="AWS">
+        <div class="tool-name">AWS</div>
+        <div class="tool-purpose">Cloud Provider</div>
+      </div>
+
+      <!-- Docker -->
+      <div class="tool-card" title="Docker — App Container">
+        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker">
+        <div class="tool-name">Docker</div>
+        <div class="tool-purpose">App Container</div>
+      </div>
+
+      <!-- DockerHub -->
+      <div class="tool-card" title="DockerHub — Image Registry">
+        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="DockerHub">
+        <div class="tool-name">DockerHub</div>
+        <div class="tool-purpose">Image Registry</div>
+      </div>
+
+      <!-- Kubernetes -->
+      <div class="tool-card" title="Kubernetes — Orchestration">
+        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg" alt="Kubernetes">
+        <div class="tool-name">Kubernetes</div>
+        <div class="tool-purpose">Orchestrator</div>
+      </div>
+
+<!-- Argo CD -->
+<div class="tool-card" title="Argo CD — GitOps Tool">
+  <img src="https://argo-cd.readthedocs.io/en/stable/assets/argo_logo.png" alt="Argo CD">
+  <div class="tool-name">Argo CD</div>
+  <div class="tool-purpose">GitOps Tool</div>
+</div>
+
+
+
+      <!-- Jenkins -->
+      <div class="tool-card" title="Jenkins — CI/CD Engine">
+        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jenkins/jenkins-original.svg" alt="Jenkins">
+        <div class="tool-name">Jenkins</div>
+        <div class="tool-purpose">CI/CD Engine</div>
+      </div>
+
+      <!-- Prometheus (brighter) -->
+      <div class="tool-card" title="Prometheus — Monitoring">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/3/38/Prometheus_software_logo.svg" alt="Prometheus" style="filter:brightness(1.2);">
+        <div class="tool-name">Prometheus</div>
+        <div class="tool-purpose">Monitoring</div>
+      </div>
+
+      <!-- Grafana (brighter) -->
+      <div class="tool-card" title="Grafana — Visualization">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/Grafana_icon.svg" alt="Grafana" style="filter:brightness(1.2);">
+        <div class="tool-name">Grafana</div>
+        <div class="tool-purpose">Visualization</div>
+      </div>
+
+      <!-- Email (brighter) -->
+      <div class="tool-card" title="Email — Smart Alerts">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Mail_%28iOS%29.svg" alt="Email" style="filter:brightness(1.2);">
+        <div class="tool-name">Email</div>
+        <div class="tool-purpose">Smart Alerts</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ---------- Main App content (kept intact) ---------- -->
+  <div class="container" role="main" aria-labelledby="main-title">
+    <div style="display:flex;justify-content:center;align-items:center;gap:12px;flex-direction:column;">
+      <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
+        <h1 id="main-title" class="main-title">2 Tier App 🚀</h1>
+        <div class="header-logos" aria-hidden="false" title="Flask & MySQL">
+          <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/flask.svg" alt="Flask" style="filter: invert(1) brightness(1.2);" onerror="this.onerror=null;">
+
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg" alt="MySQL" onerror="this.onerror=null;">
+        </div>
+      </div>
+
+      <h2 class="sub-title">Flask + MySQL</h2>
+      <p class="creator">Created by <strong>Ozair Khan</strong> ✨ Innovating DevOps Experiences!</p>
+    </div>
+
+    <div class="messages">
+      {% for message in messages %}
+        <p>{{ message[0] }}</p>
+      {% endfor %}
+    </div>
+
+    <form id="messageForm">
+      <input type="text" name="new_message" placeholder="Type your message..." required />
+      <input type="submit" value="Send" />
+    </form>
+
+    <div class="footer">
+      Thanks to <strong>Abhishek Veeramalla</strong> and <strong>Shubham Londhe</strong> for their Guidance 🙏
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(function(){
+      $("#messageForm").on("submit", function(e){
+        e.preventDefault();
+        let messageInput = $("input[name='new_message']");
+        let message = messageInput.val().trim();
+        if(!message){ alert("Message cannot be empty!"); return; }
+        $.ajax({
+          url:"/submit",
+          type:"POST",
+          data:{ new_message: message },
+          success:function(response){
+            if(response && response.message){
+              $(".messages").append($("<p>").text(response.message));
+              messageInput.val("");
+            } else { console.error("Unexpected response:", response); }
+          },
+          error:function(xhr, status, err){
+            console.error("AJAX Error:", status, err);
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-mysql-app
+  labels:
+    app: flask-mysql-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-mysql-app
+  template:
+    metadata:
+      labels:
+        app: flask-mysql-app
+    spec:
+      containers:
+        - name: flask-mysql-app
+          image: ozairkhan1/flask-mysql-app:v16
+          env:
+            - name: MYSQL_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config
+                  key: mysql-host       # Still from ConfigMap or hardcoded for now
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-password
+            - name: MYSQL_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config
+                  key: mysql-db
+          ports:
+            - containerPort: 5000
+          imagePullPolicy: Always
+
