@@ -1,6 +1,10 @@
 # Ansible-Ready Fully Customizable Dynamic Inventory
 # Create inventories based on AMI, tag, or a combination of tag and value.
 
+# The only limitation is it doesn't prove ansible user, or path to private key and more. These problems are addressed in other program in the same Repo with name
+# "Prod_Rdy_dynamic_inv.py" Just run and Enter the Path for Private Key if the key is not located at different positions
+
+
 import boto3
 
 ec2 = boto3.client("ec2")
