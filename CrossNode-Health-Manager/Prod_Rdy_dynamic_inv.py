@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# The path to "PRIVATE KEY" will be asked for creating a dynamic Inventory. Therefore it is recommended to Pass the path correctly. 
+# The path to "PRIVATE KEY" will be asked for creating a dynamic Inventory. Therefore it is recommended to Pass the path correctly. If the Key is available at 
+# at the default location then you can skip it or press enter to continue
 
 import boto3
 import os
