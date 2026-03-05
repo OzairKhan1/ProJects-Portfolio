@@ -1,3 +1,8 @@
+# The Only Limitation for This Program is that the Private should be present at default location which is ~/.ssh. Then it works fine. I have seen this limitation 
+# When the instances were created using Terrafrom. 
+# Althouh for private .pem file it works fine no matter where the key is present
+
+
 #!/bin/bash
 
 file="/home/ubuntu/projectAnsible/VmHealth_Project/dynamic_inventory.ini"
