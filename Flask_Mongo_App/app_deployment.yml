@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: flask-mongo-deployment
+  namespace: app-ns
+  labels:
+    app: flask-mongo-app
+
+spec:
+  replicas: 1
+
+  # The Deployment manages Pods with this label.
+  selector:
+    matchLabels:
+      app: flask-mongo-app
+
+  # Template used to create Pods.
+  template:
+    metadata:
+      labels:
+        app: flask-mongo-app
+
+    spec:
+      containers:
+        - name: flask-app
+          image: ozairkhan1/flask-mongo-app:v1.3
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 5000
+
+          readinessProbe:
+            httpGet:
+             path: /health
+             port: 5000
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet:
+             path: /health
+             port: 5000
+            initialDelaySeconds: 10
+          # Environment variables passed to the Flask application.
+          # Flask reads MONGO_URI using os.getenv().
+          env:
+            - name: MONGO_URI
+              value: "mongodb://mongo-service:27017/dev"
+            # Optional application version.
+            - name: APP_VERSION
+              value: "1.0"

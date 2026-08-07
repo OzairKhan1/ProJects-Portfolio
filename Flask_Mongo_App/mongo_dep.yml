@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: mongo-deployment
+  namespace: app-ns
+  labels:
+    app: mongo-Deployment # this name is not necessary to be the same
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: mongo
+
+  template:
+    metadata:
+      labels:
+        app: mongo
+
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:7
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 27017
+
+          # MongoDB stores its database here.
+          volumeMounts:
+            - name: mongo-storage
+              mountPath: /data/db
+
+      volumes:
+        - name: mongo-storage
+          persistentVolumeClaim:
+            claimName: mongo-pvc

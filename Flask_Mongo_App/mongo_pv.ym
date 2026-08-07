@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: PersistentVolume
+
+metadata:
+  name: mongo-pv
+
+spec:
+  capacity:
+    storage: 1Gi
+
+  volumeMode: Filesystem
+
+  accessModes:
+    - ReadWriteOnce
+
+  # Prevent Kubernetes from deleting the data
+  # even if the PVC is deleted.
+  persistentVolumeReclaimPolicy: Retain
+
+  # Used to explicitly match this PV with the PVC.
+  storageClassName: manual
+
+  # For learning/single-node clusters only.
+  # Not recommended for production.
+  hostPath:
+    path: /home/node/mongodata
