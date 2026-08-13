@@ -1,5 +1,7 @@
 ## Debugging a Flask + MongoDB App on Kubeadm (OCI): Root Cause Chain & Takeaways
-#### NOTE:  ### Bug: Pod DNS resolution timeout (cross-node) on OCI kubeadm cluster
+#### NOTE:   
+
+Bug: Pod DNS resolution timeout (cross-node) on OCI kubeadm cluster
 
 **Symptom:** App pod on `wor-2` failed to resolve `mongo-service` — `Temporary failure in name resolution` — despite CoreDNS being healthy and resolv.conf correctly pointing to `10.96.0.10`.
 
