@@ -1,4 +1,15 @@
 ## Debugging a Flask + MongoDB App on Kubeadm (OCI): Root Cause Chain & Takeaways
+#### NOTE:  ### Bug: Pod DNS resolution timeout (cross-node) on OCI kubeadm cluster
+
+**Symptom:** App pod on `wor-2` failed to resolve `mongo-service` — `Temporary failure in name resolution` — despite CoreDNS being healthy and resolv.conf correctly pointing to `10.96.0.10`.
+
+**Root cause:** CoreDNS pods were scheduled on `MASTER`, app pod on `WORKER`. Calico VXLAN tunnel interfaces were up on both nodes, but the encapsulated traffic (UDP/4789) was being silently dropped by the OCI Security List — no rule explicitly allowed UDP/4789 between worker node subnets. Same-node traffic worked fine, masking the issue as DNS-specific until cross-node `ping` between pod IPs also failed.
+
+**Fix:** Add ingress + egress rules to the OCI Security List (or NSG) for the worker subnet: `UDP port 4789`, source/destination = worker subnet CIDR (Security Lists are stateless — both directions required).
+
+**Diagnostic path:** resolv.conf ✅ → Service/Endpoints ✅ → CoreDNS pod health ✅ → cross-node pod-to-pod ping ❌ → confirmed overlay/network issue, not DNS.
+
+**Lesson:** On OCI, always explicitly allow VXLAN (UDP/4789) between worker nodes — same class of gotcha as OCI's default-reject INPUT chain and Security Lists silently dropping Calico IP-in-IP.
 
 ## Summary
 
