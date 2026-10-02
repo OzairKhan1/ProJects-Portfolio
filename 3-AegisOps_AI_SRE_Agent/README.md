@@ -160,63 +160,6 @@ The backend serves the UI with Flask's `render_template("index.html")`, so the i
     └── Project documentation
 ```
 
----
-
-## 🔌 REST API
-
-The UI is just one client. The same backend exposes a REST API.
-
-### Endpoint
-
-```text
-POST /chat
-```
-
-### Request
-
-```json
-{
-  "prompt": "Why is my Linux server using high CPU?"
-}
-```
-
-### cURL Example
-
-```bash
-curl -X POST http://localhost:5000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"prompt":"Why is my Linux server using high CPU?"}'
-```
-
-### Example Response
-
-```json
-{
-  "status": "success",
-  "agent_response": "High CPU usage can be investigated by..."
-}
-```
-
----
-
-## 🧪 Test from Python
-
-Install the client dependency:
-
-```bash
-python3 -m pip install requests
-```
-
-Run:
-
-```bash
-python3 test.py
-```
-
-The CLI client sends prompts to the running `/chat` API and prints the AI response.
-
----
-
 ## ⚙️ Configuration
 
 The Flask application supports these environment variables:
