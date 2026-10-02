@@ -32,7 +32,7 @@ services:
 
   # Linux AI Flask application
   flask-app:
-    image: ozairkhan1/sre-ai-agent:v5
+    image: ozairkhan1/sre-ai-agent:v6
     container_name: sre-agent
     ports:
       - "5000:5000"
