@@ -21,83 +21,11 @@ cd ProJects-Portfolio/3-AegisOps_AI_SRE_Agent
 docker-compose up -d
 ```
 
-Then open **http://localhost:5001** in your browser.
+Then open **http://host/ip:5000** in your browser.
 
 > **Don't have Docker Compose?** The repository includes an installation guide for Docker and Docker Compose. Install it first, then come back to the steps above.
 
----
-
-## 🚀 How to Run (Step by Step)
-
-### Prerequisites
-
-| Requirement        | Notes                                                        |
-| ------------------ | ------------------------------------------------------------ |
-| **Git**            | To clone the repository                                      |
-| **Docker**         | Container runtime                                            |
-| **Docker Compose** | See the installation guide in the repository                 |
-| **~4 GB free disk** | For the images and the `llama3.2:1b` model                  |
-
-Verify your setup:
-
-```bash
-git --version
-docker --version
-docker-compose --version
-```
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/OzairKhan1/ProJects-Portfolio.git
-```
-
-### 2. Enter the Project Directory
-
-```bash
-cd ProJects-Portfolio/3-AegisOps_AI_SRE_Agent
-```
-
-### 3. Start the Services
-
-```bash
-docker-compose up -d
-```
-
-This starts:
-
-* The **AegisOps** Flask application (web UI + REST API)
-* The **Ollama** model server
-* The internal Docker network between them
-* Persistent storage for Ollama models
-
-Check that both containers are running:
-
-```bash
-docker-compose ps
-```
-
-### 4. Make Sure the AI Model Is Available
-
-Ollama serves the model, and the model itself is downloaded once. If this is your first run (or the chat reports that the model is missing), pull it:
-
-```bash
-docker exec ollama ollama pull llama3.2:1b
-```
-
-Verify:
-
-```bash
-docker exec ollama ollama list
-```
-
-You should see `llama3.2:1b` in the list. The model is stored in a persistent volume, so you only do this once.
-
-### 5. Open AegisOps
-
-```text
-http://localhost:5001
-```
+--- 
 
 ### Stop / Restart / Clean Up
 
@@ -255,7 +183,7 @@ POST /chat
 ### cURL Example
 
 ```bash
-curl -X POST http://localhost:5001/chat \
+curl -X POST http://localhost:5000/chat \
   -H "Content-Type: application/json" \
   -d '{"prompt":"Why is my Linux server using high CPU?"}'
 ```
@@ -323,19 +251,6 @@ docker-compose up -d --build
 ## 📡 Observability
 
 The application is instrumented with **OpenTelemetry**. Tracing covers the Flask application and the AI agent calls, so the project can be integrated with observability and distributed-tracing platforms.
-
----
-
-## 🩺 Troubleshooting
-
-| Problem                                   | Fix                                                                                   |
-| ----------------------------------------- | ------------------------------------------------------------------------------------- |
-| Chat shows *"Unable to reach the AI agent"* | Check both containers: `docker-compose ps`, then `docker-compose logs -f`          |
-| Error about a missing model               | Pull it: `docker exec ollama ollama pull llama3.2:1b`                                 |
-| Page doesn't load on `localhost:5001`     | Confirm the app container is running and port **5001** is free on your machine        |
-| `TemplateNotFound: index.html`            | Make sure the `templates/` folder is copied into the image (see the `dockerfile`)     |
-| UI changes don't appear                   | Rebuild: `docker-compose up -d --build`                                               |
-| First answer is slow                      | Normal. The model loads into memory on the first request                              |
 
 ---
 
