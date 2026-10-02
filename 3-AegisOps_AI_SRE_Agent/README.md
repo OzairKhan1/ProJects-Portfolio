@@ -1,14 +1,14 @@
-# 🐧 Linux AI — SRE Incident Response Agent
+# 🐧 AegisOps — SRE Incident Response Agent
 
 A lightweight, containerized **AI-powered Linux SRE assistant** for troubleshooting infrastructure issues, analyzing incidents, and performing root-cause analysis.
 
-Linux AI combines **Flask, Ollama, Docker, and OpenTelemetry** to provide a simple web-based interface and REST API for interacting with a local AI model.
+AegisOps combines **Flask, Ollama, Docker, and OpenTelemetry** to provide a simple web-based interface and REST API for interacting with a local AI model.
 
 ---
 
 ## ✨ What It Does
 
-Linux AI is designed as an SRE-focused troubleshooting assistant that can help with:
+AegisOps is designed as an SRE-focused troubleshooting assistant that can help with:
 
 * 🔥 High CPU and memory usage
 * 💾 Disk and I/O problems
@@ -47,7 +47,7 @@ The interface includes:
                         ▼
               ┌───────────────────┐
               │    Flask App      │
-              │    Linux AI       │
+              │    AegisOps       │
               │    Port: 5000     │
               └─────────┬─────────┘
                         │
@@ -268,7 +268,7 @@ Docker Compose provides the networking and service orchestration between the two
 
 ## 🎯 Project Objective
 
-Linux AI demonstrates how AI can be integrated into modern **Cloud, DevOps, and SRE workflows** to assist with:
+AegisOps demonstrates how AI can be integrated into modern **Cloud, DevOps, and SRE workflows** to assist with:
 
 * Incident investigation
 * Linux troubleshooting
