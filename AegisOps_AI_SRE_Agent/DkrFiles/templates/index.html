@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AegisOps — SRE Agent · OzairKhan</title>
+
+<style>
+
+:root {
+    /* ---- THEME: "Ember" (amber -> orange -> rose on neutral charcoal)
+       To re-theme, change only --a1/--a2/--a3, their -rgb twins, --soft, --soft2.
+       Emerald : a1 #a3e635 (163,230,53)  a2 #22c55e (34,197,94)   a3 #0d9488 (13,148,136)  soft #86efac  soft2 #5eead4
+       Crimson : a1 #fb7185 (251,113,133) a2 #ef4444 (239,68,68)   a3 #be123c (190,18,60)   soft #fca5a5  soft2 #fda4af
+       Mono    : a1 #e4e4e7 (228,228,231) a2 #a1a1aa (161,161,170) a3 #71717a (113,113,122) soft #d4d4d8  soft2 #a1a1aa */
+    --a1: #34d399;  --a1-rgb: 52, 211, 153;
+    --a2: #059669;  --a2-rgb: 5, 150, 105;
+    --a3: #0f766e;  --a3-rgb: 15, 118, 110;
+    --soft: #6ee7b7;
+    --soft2: #99f6e4;
+
+    --bg: #060908;
+    --panel: rgba(15, 23, 20, 0.70);
+    --panel-solid: #0f1714;
+    --border: rgba(255, 255, 255, 0.07);
+    --text: #ecfdf5;
+    --muted: #94a3b8;
+    --green: #34d399;
+    --grad: linear-gradient(135deg, var(--a1) 0%, var(--a2) 50%, var(--a3) 100%);
+    --mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+
+/* =========================================================
+   Animated background
+   ========================================================= */
+
+.bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: .5;
+    animation: float 18s ease-in-out infinite;
+}
+
+.orb.o1 { width: 520px; height: 520px; background: var(--a2); top: -160px; left: -120px; }
+.orb.o2 { width: 460px; height: 460px; background: var(--a3); bottom: -180px; right: -100px; animation-delay: -6s; opacity: .38; }
+.orb.o3 { width: 340px; height: 340px; background: var(--a1); top: 38%; left: 55%; animation-delay: -11s; opacity: .26; }
+
+@keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33%      { transform: translate(60px, 40px) scale(1.1); }
+    66%      { transform: translate(-40px, 60px) scale(.95); }
+}
+
+.grid {
+    position: absolute; inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mask-image: radial-gradient(ellipse at 50% 30%, #000 20%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at 50% 30%, #000 20%, transparent 75%);
+}
+
+
+/* =========================================================
+   designer intro
+   ========================================================= */
+
+.intro {
+    position: fixed; inset: 0;
+    z-index: 100;
+    background: #000;
+    transition: opacity 1s ease .15s, visibility 0s linear 1.2s;
+    cursor: pointer;
+}
+
+.intro::before {
+    content: "";
+    position: absolute; left: 50%; top: 50%;
+    width: 80vmax; height: 80vmax;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(var(--a2-rgb),.28) 0%, rgba(var(--a3-rgb),.14) 30%, transparent 62%);
+    opacity: 0;
+    animation: aura 2.8s ease-out .2s forwards;
+}
+
+@keyframes aura {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(.4); }
+    50%  { opacity: 1; }
+    100% { opacity: .7; transform: translate(-50%, -50%) scale(1); }
+}
+
+.intro .beam {
+    position: absolute; left: 50%; top: 50%;
+    height: 2px; width: 0;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(90deg, transparent, var(--a1), #fff, var(--a3), transparent);
+    box-shadow: 0 0 30px 6px rgba(var(--a2-rgb),.45);
+    animation: beam 1.4s cubic-bezier(.2,.8,.2,1) .15s forwards;
+}
+
+@keyframes beam {
+    0%   { width: 0; opacity: 0; }
+    30%  { opacity: 1; }
+    100% { width: min(86vw, 900px); opacity: 0; }
+}
+
+.docked-state .intro { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.designer {
+    position: fixed;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 101;
+    text-align: center;
+    pointer-events: none;
+    white-space: nowrap;
+    transition: top 1.1s cubic-bezier(.77, 0, .18, 1);
+}
+
+.designer .by {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .5em;
+    text-transform: uppercase;
+    color: #8a8a94;
+    opacity: 0;
+    margin-bottom: 18px;
+    animation: byIn 1s ease .9s forwards;
+    transition: font-size 1.1s cubic-bezier(.77,0,.18,1), margin 1.1s cubic-bezier(.77,0,.18,1), letter-spacing 1.1s cubic-bezier(.77,0,.18,1);
+}
+
+@keyframes byIn { to { opacity: 1; } }
+
+.designer .name {
+    display: block;
+    font-size: clamp(38px, 9.5vw, 104px);
+    font-weight: 800;
+    letter-spacing: .16em;
+    line-height: 1;
+    text-transform: uppercase;
+    padding-left: .16em;
+    transition: font-size 1.1s cubic-bezier(.77,0,.18,1), letter-spacing 1.1s cubic-bezier(.77,0,.18,1);
+}
+
+.designer .name span {
+    display: inline-block;
+    opacity: 0;
+    background: linear-gradient(180deg, #ffffff 0%, #fde68a 45%, #fb923c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    filter: blur(18px);
+    transform: scale(2.6) translateY(10px);
+    animation: letterIn 1.15s cubic-bezier(.16, 1, .3, 1) forwards;
+    animation-delay: calc(.35s + var(--i) * .075s);
+}
+
+@keyframes letterIn {
+    0%   { opacity: 0; filter: blur(18px); transform: scale(2.6) translateY(10px); }
+    55%  { opacity: 1; filter: blur(0);    transform: scale(1)   translateY(0); }
+    100% { opacity: 1; filter: blur(0);    transform: scale(1)   translateY(0); }
+}
+
+/* Docked: sits at top middle of the header */
+.docked-state .designer { top: 36px; }
+.docked-state .designer .by { font-size: 8px; letter-spacing: .42em; margin-bottom: 4px; }
+.docked-state .designer .name { font-size: 21px; letter-spacing: .2em; padding-left: .2em; }
+.docked-state .designer .name span {
+    animation: none; opacity: 1; filter: none; transform: none;
+    background: linear-gradient(90deg, #ffffff, var(--soft), var(--soft2), var(--soft), #ffffff);
+    background-size: 250% 100%;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 5s linear infinite;
+}
+
+@keyframes shimmer { to { background-position: -250% 0; } }
+
+.skip-hint {
+    position: fixed; bottom: 26px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px; letter-spacing: .2em;
+    color: #5b5b64; text-transform: uppercase;
+    z-index: 102;
+    opacity: 0; animation: byIn 1s ease 1.6s forwards;
+    transition: opacity .4s;
+}
+.docked-state .skip-hint { opacity: 0 !important; animation: none; }
+
+
+/* =========================================================
+   App layout
+   ========================================================= */
+
+.app {
+    position: relative; z-index: 1;
+    height: 100vh; height: 100dvh;
+    display: flex; flex-direction: column;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity .9s ease .5s, transform .9s ease .5s;
+}
+.docked-state .app { opacity: 1; transform: none; }
+
+
+/* Header */
+
+.header {
+    position: relative;
+    height: 72px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8, 8, 10, .6);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+.header::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(var(--a2-rgb),.55), rgba(var(--a3-rgb),.55), transparent);
+    opacity: .7;
+}
+
+.brand { display: flex; align-items: center; gap: 13px; min-width: 0; }
+
+.logo {
+    width: 42px; height: 42px; border-radius: 13px;
+    display: grid; place-items: center;
+    background: var(--grad);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset, 0 8px 30px rgba(var(--a2-rgb),.35);
+    font-family: var(--mono); font-weight: 800; font-size: 15px; color: #fff;
+    flex-shrink: 0;
+}
+
+.brand-text h1 { font-size: 16px; font-weight: 700; letter-spacing: -.2px; }
+.brand-text span { display: block; margin-top: 2px; font-size: 11.5px; color: var(--muted); }
+
+.status {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 13px;
+    border: 1px solid rgba(34,197,94,.22);
+    border-radius: 999px;
+    background: rgba(34,197,94,.07);
+    font-size: 12px; color: #86efac;
+    flex-shrink: 0;
+}
+
+.status-dot {
+    position: relative;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green); box-shadow: 0 0 10px var(--green);
+}
+.status-dot::after {
+    content: ""; position: absolute; inset: -4px; border-radius: 50%;
+    border: 1px solid var(--green);
+    animation: ping 1.8s ease-out infinite;
+}
+@keyframes ping { 0% { transform: scale(.6); opacity: .9; } 100% { transform: scale(1.8); opacity: 0; } }
+
+
+/* Main */
+
+.main {
+    flex: 1; min-height: 0;
+    width: 100%; max-width: 980px;
+    margin: 0 auto;
+    display: flex; flex-direction: column;
+    padding: 18px 20px 16px;
+}
+
+.chat-container {
+    flex: 1; min-height: 0;
+    overflow-y: auto;
+    padding: 4px 4px 20px;
+    scroll-behavior: smooth;
+}
+.chat-container::-webkit-scrollbar { width: 6px; }
+.chat-container::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+
+
+/* Hero */
+
+.hero {
+    text-align: center;
+    padding: 34px 10px 26px;
+    transition: opacity .35s ease, max-height .5s ease, padding .5s ease, margin .5s ease;
+    max-height: 520px;
+    overflow: hidden;
+}
+.hero.hide { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; }
+
+.badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 13px; border-radius: 999px;
+    border: 1px solid rgba(var(--a3-rgb),.3);
+    background: rgba(var(--a3-rgb),.1);
+    color: var(--soft2); font-size: 11.5px; letter-spacing: .04em;
+    margin-bottom: 18px;
+}
+
+.hero h2 {
+    font-size: clamp(28px, 4.6vw, 46px);
+    font-weight: 800; letter-spacing: -1.4px; line-height: 1.1;
+}
+.hero h2 .grad {
+    background: var(--grad);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+}
+.hero p {
+    max-width: 580px; margin: 14px auto 0;
+    color: var(--muted); font-size: 14.5px; line-height: 1.7;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 28px;
+    text-align: left;
+}
+
+.card {
+    position: relative;
+    padding: 16px 15px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit; text-align: left;
+    transition: transform .25s ease, border-color .25s ease, background .25s ease, box-shadow .25s ease;
+}
+.card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(var(--a2-rgb),.4);
+    background: rgba(39, 39, 42, .8);
+    box-shadow: 0 14px 40px rgba(var(--a2-rgb),.1);
+}
+.card .ico {
+    width: 34px; height: 34px; border-radius: 10px;
+    display: grid; place-items: center; font-size: 16px;
+    background: rgba(255,255,255,.06);
+    margin-bottom: 12px;
+}
+.card b { display: block; font-size: 13.5px; margin-bottom: 4px; }
+.card small { display: block; font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+
+
+/* Messages */
+
+.message {
+    display: flex; gap: 12px;
+    margin-bottom: 22px;
+    animation: rise .35s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.message.user { flex-direction: row-reverse; }
+
+.avatar {
+    width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0;
+    display: grid; place-items: center;
+    font-size: 11px; font-weight: 800; font-family: var(--mono); color: #fff;
+}
+.message.ai .avatar { background: var(--grad); box-shadow: 0 6px 20px rgba(var(--a2-rgb),.3); }
+.message.user .avatar { background: linear-gradient(135deg, #3f3f46, #27272a); border: 1px solid var(--border); color: #d4d4d8; }
+
+.bubble { max-width: min(78%, 720px); min-width: 0; }
+.message.user .bubble { display: flex; flex-direction: column; align-items: flex-end; }
+
+.message-label { font-size: 11px; color: #71717a; margin-bottom: 6px; letter-spacing: .02em; }
+
+.message-content {
+    padding: 13px 16px;
+    border-radius: 16px;
+    font-size: 14px; line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+.message.ai .message-content {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-top-left-radius: 5px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    color: #d4d4d8;
+}
+
+.message.user .message-content {
+    background: linear-gradient(135deg, #ea580c, #e11d48);
+    color: #fff;
+    border-top-right-radius: 5px;
+    box-shadow: 0 10px 30px rgba(var(--a2-rgb),.2);
+    white-space: pre-wrap;
+}
+
+.message-content .txt { white-space: pre-wrap; }
+.message-content .txt + .code,
+.message-content .code + .txt { margin-top: 10px; }
+
+.message-content code.inline {
+    font-family: var(--mono); font-size: 12.5px;
+    padding: 2px 6px; border-radius: 6px;
+    background: rgba(161,161,170,.14); color: var(--soft);
+}
+
+.message-content strong { color: #f1f5f9; font-weight: 700; }
+
+.code {
+    border-radius: 12px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,.08);
+    background: #0b0b0d;
+}
+.code-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255,255,255,.04);
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    font-family: var(--mono); font-size: 11px; color: #8a8a94;
+}
+.code-head .dots { display: flex; gap: 6px; align-items: center; }
+.code-head .dots i { width: 9px; height: 9px; border-radius: 50%; display: block; }
+.code-head .dots i:nth-child(1) { background: #ff5f57; }
+.code-head .dots i:nth-child(2) { background: #febc2e; }
+.code-head .dots i:nth-child(3) { background: #28c840; }
+.code-head .lang { margin-left: 10px; text-transform: lowercase; }
+.copy-btn {
+    border: 1px solid rgba(255,255,255,.1); background: transparent; color: #a1a1aa;
+    font-family: inherit; font-size: 11px; padding: 3px 9px; border-radius: 6px; cursor: pointer;
+    transition: .2s;
+}
+.copy-btn:hover { color: #fff; border-color: rgba(var(--a2-rgb),.5); }
+.code pre {
+    margin: 0; padding: 13px 15px; overflow-x: auto;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.65; color: #b6f3c5;
+    white-space: pre;
+}
+.code pre::-webkit-scrollbar { height: 6px; }
+.code pre::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+
+
+/* Typing indicator */
+
+.typing {
+    display: none;
+    align-items: center; gap: 12px;
+    margin: 0 0 20px 4px;
+}
+.typing .pill {
+    display: flex; align-items: center; gap: 5px;
+    padding: 14px 16px;
+    border-radius: 16px; border-top-left-radius: 5px;
+    background: var(--panel); border: 1px solid var(--border);
+}
+.typing .pill span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--cyan);
+    animation: typing 1.2s infinite;
+}
+.typing .pill span:nth-child(2) { animation-delay: .15s; }
+.typing .pill span:nth-child(3) { animation-delay: .3s; }
+@keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); opacity: .35; }
+    30% { transform: translateY(-5px); opacity: 1; }
+}
+
+
+/* Suggestions (compact chips once chat has started) */
+
+.suggestions {
+    display: none;
+    gap: 8px; overflow-x: auto;
+    padding: 2px 0 12px;
+}
+.suggestions.show { display: flex; }
+.suggestions::-webkit-scrollbar { display: none; }
+
+.suggestion {
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    background: rgba(24, 24, 27, .7);
+    color: #a1a1aa;
+    padding: 8px 13px; border-radius: 999px;
+    cursor: pointer; font-size: 12px; font-family: inherit;
+    transition: .2s;
+}
+.suggestion:hover {
+    color: #f4f4f5;
+    border-color: rgba(var(--a2-rgb),.4);
+    background: rgba(var(--a2-rgb),.08);
+}
+
+
+/* Input */
+
+.input-area { padding-top: 4px; }
+
+.input-box {
+    display: flex; align-items: flex-end; gap: 10px;
+    padding: 10px;
+    border-radius: 20px;
+    background: rgba(16, 16, 18, .85);
+    border: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    transition: border-color .25s, box-shadow .25s;
+}
+.input-box:focus-within {
+    border-color: rgba(var(--a2-rgb),.45);
+    box-shadow: 0 20px 60px rgba(0,0,0,.4), 0 0 0 4px rgba(var(--a2-rgb),.08);
+}
+
+textarea {
+    flex: 1; resize: none; border: none; outline: none;
+    background: transparent; color: var(--text);
+    font-family: inherit; font-size: 14px; line-height: 1.5;
+    min-height: 44px; max-height: 150px;
+    padding: 11px 10px;
+}
+textarea::placeholder { color: #5b5b64; }
+
+.send-button {
+    width: 44px; height: 44px; border: none; border-radius: 14px;
+    background: var(--grad); color: #fff; cursor: pointer;
+    font-size: 19px; font-weight: 700;
+    display: grid; place-items: center;
+    transition: transform .2s, box-shadow .2s, opacity .2s;
+    flex-shrink: 0;
+}
+.send-button:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(var(--a2-rgb),.4); }
+.send-button:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.footer {
+    text-align: center; color: #5b5b64; font-size: 11px;
+    padding: 11px 0 0; letter-spacing: .02em;
+}
+.footer b { color: #8a8a94; font-weight: 600; }
+.footer .model {
+    font-family: var(--mono); color: var(--soft);
+    padding: 1px 7px; border-radius: 6px; background: rgba(var(--a2-rgb),.08);
+}
+
+
+/* Responsive */
+
+@media (max-width: 860px) {
+    .cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 650px) {
+    .header { padding: 0 14px; }
+    .status, .brand-text span { display: none; }
+    .brand-text h1 { font-size: 14px; }
+    .main { padding: 12px 12px 12px; }
+    .hero { padding-top: 18px; }
+    .bubble { max-width: 86%; }
+    .docked-state .designer .name { font-size: 16px; }
+    .designer .by { letter-spacing: .35em; font-size: 10px; }
+    .docked-state .designer .by { font-size: 7px; }
+    .brand-text { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .orb, .status-dot::after { animation: none; }
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<div class="bg">
+    <div class="orb o1"></div>
+    <div class="orb o2"></div>
+    <div class="orb o3"></div>
+    <div class="grid"></div>
+</div>
+
+
+<!-- designer intro -->
+
+<div class="intro" id="intro">
+    <div class="beam"></div>
+</div>
+
+<div class="designer" id="designer">
+    <span class="by">Designed by</span>
+    <span class="name" id="designerName" aria-label="Ozair Khan"></span>
+</div>
+
+<div class="skip-hint" id="skipHint">Click to skip</div>
+
+
+<div class="app">
+
+    <header class="header">
+
+        <div class="brand">
+            <div class="logo">&gt;_</div>
+            <div class="brand-text">
+                <h1>AegisOps</h1>
+                <span>SRE &amp; Incident Response Agent</span>
+            </div>
+        </div>
+
+        <div class="status">
+            <span class="status-dot"></span>
+            AI Agent Online
+        </div>
+
+    </header>
+
+
+    <main class="main">
+
+        <div id="chat" class="chat-container">
+
+            <section class="hero" id="hero">
+
+                <div class="badge">✦ Cloud &amp; DevOps Incident Assistant</div>
+
+                <h2>Troubleshoot Servers<br><span class="grad">like an SRE.</span></h2>
+
+                <p>
+                    Analyze incidents, investigate logs and metrics, and get
+                    root-cause analysis with clear, actionable fixes.
+                </p>
+
+                <div class="cards">
+
+                    <button class="card" onclick="usePrompt('Why is my Linux server using high CPU?')">
+                        <div class="ico">🔥</div>
+                        <b>High CPU</b>
+                        <small>Find the process eating your cores.</small>
+                    </button>
+
+                    <button class="card" onclick="usePrompt('How do I investigate high memory usage on Linux?')">
+                        <div class="ico">🧠</div>
+                        <b>High Memory</b>
+                        <small>Track leaks, swap and OOM kills.</small>
+                    </button>
+
+                    <button class="card" onclick="usePrompt('How can I troubleshoot a Linux server with slow disk I/O?')">
+                        <div class="ico">💾</div>
+                        <b>Disk I/O</b>
+                        <small>Diagnose latency and saturation.</small>
+                    </button>
+
+                    <button class="card" onclick="usePrompt('What commands should I use to investigate a Linux server outage?')">
+                        <div class="ico">🚨</div>
+                        <b>Server Outage</b>
+                        <small>Step-by-step incident triage.</small>
+                    </button>
+
+                </div>
+
+            </section>
+
+            <div class="message ai">
+                <div class="avatar">AI</div>
+                <div class="bubble">
+                    <div class="message-label">AegisOps</div>
+                    <div class="message-content">Hello User. I'm AegisOps, your SRE assistant. How can I help you troubleshoot your Linux infrastructure today?</div>
+                </div>
+            </div>
+
+        </div>
+
+
+        <div id="typing" class="typing">
+            <div class="avatar" style="background:var(--grad);width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-size:11px;font-weight:800;font-family:var(--mono);color:#fff;">AI</div>
+            <div class="pill"><span></span><span></span><span></span></div>
+        </div>
+
+
+        <div class="suggestions" id="chips">
+            <button class="suggestion" onclick="usePrompt('Why is my Linux server using high CPU?')">🔥 High CPU</button>
+            <button class="suggestion" onclick="usePrompt('How do I investigate high memory usage on Linux?')">🧠 High Memory</button>
+            <button class="suggestion" onclick="usePrompt('How can I troubleshoot a Linux server with slow disk I/O?')">💾 Disk I/O</button>
+            <button class="suggestion" onclick="usePrompt('What commands should I use to investigate a Linux server outage?')">🚨 Server Outage</button>
+        </div>
+
+
+        <div class="input-area">
+
+            <div class="input-box">
+
+                <textarea
+                    id="prompt"
+                    rows="1"
+                    placeholder="Ask AegisOps about your infrastructure..."
+                    onkeydown="handleKey(event)"
+                ></textarea>
+
+                <button id="send" class="send-button" onclick="sendMessage()" title="Send">↑</button>
+
+            </div>
+
+            <div class="footer">
+                AegisOps · Powered by Ollama ·
+                <span class="model" id="model">{{ model: llama3.2:1b  }}</span>
+                · Designed by <b>OzairKhan</b>
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+
+<script>
+
+const chat = document.getElementById("chat");
+const promptInput = document.getElementById("prompt");
+const sendButton = document.getElementById("send");
+const typing = document.getElementById("typing");
+const hero = document.getElementById("hero");
+const chips = document.getElementById("chips");
+
+
+/* =========================================================
+   Netflix-style intro
+   ========================================================= */
+
+(function intro() {
+
+    const nameEl = document.getElementById("designerName");
+    const text = "OzairKhan";
+
+    text.split("").forEach(function (ch, i) {
+        const s = document.createElement("span");
+        s.textContent = ch;
+        s.style.setProperty("--i", i);
+        nameEl.appendChild(s);
+    });
+
+    let done = false;
+
+    function dock() {
+        if (done) { return; }
+        done = true;
+        document.body.classList.add("docked-state");
+        /* letters keep their own animation; restart shimmer cleanly */
+        nameEl.querySelectorAll("span").forEach(function (s) {
+            s.style.animationDelay = "0s";
+        });
+        setTimeout(function () { promptInput.focus(); }, 1400);
+    }
+
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    setTimeout(dock, reduce ? 400 : 3600);
+
+    document.getElementById("intro").addEventListener("click", dock);
+    document.addEventListener("keydown", function (e) {
+        if (!done && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) { dock(); }
+    });
+
+})();
+
+
+
+/* =========================================================
+   Safe message rendering (code blocks, inline code, bold)
+   ========================================================= */
+
+function escapeHtml(s) {
+    return s
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+function inlineFormat(s) {
+    return escapeHtml(s)
+        .replace(/`([^`\n]+)`/g, '<code class="inline">$1</code>')
+        .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+}
+
+function buildCodeBlock(lang, code) {
+
+    const box = document.createElement("div");
+    box.className = "code";
+
+    const head = document.createElement("div");
+    head.className = "code-head";
+
+    const left = document.createElement("div");
+    left.className = "dots";
+    left.innerHTML = "<i></i><i></i><i></i>";
+
+    const l = document.createElement("span");
+    l.className = "lang";
+    l.textContent = lang || "shell";
+    left.appendChild(l);
+
+    const btn = document.createElement("button");
+    btn.className = "copy-btn";
+    btn.textContent = "Copy";
+    btn.onclick = function () {
+        const done = function () {
+            btn.textContent = "Copied ✓";
+            setTimeout(function () { btn.textContent = "Copy"; }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(code).then(done, done);
+        } else {
+            const t = document.createElement("textarea");
+            t.value = code;
+            document.body.appendChild(t);
+            t.select();
+            try { document.execCommand("copy"); } catch (e) {}
+            document.body.removeChild(t);
+            done();
+        }
+    };
+
+    head.appendChild(left);
+    head.appendChild(btn);
+
+    const pre = document.createElement("pre");
+    pre.textContent = code;
+
+    box.appendChild(head);
+    box.appendChild(pre);
+
+    return box;
+}
+
+function renderContent(target, text) {
+
+    const re = /```([\w+-]*)[ \t]*\r?\n?([\s\S]*?)```/g;
+    let last = 0;
+    let m;
+
+    function addText(chunk) {
+        if (!chunk.trim()) { return; }
+        const d = document.createElement("div");
+        d.className = "txt";
+        d.innerHTML = inlineFormat(chunk.replace(/^\s+|\s+$/g, ""));
+        target.appendChild(d);
+    }
+
+    while ((m = re.exec(text)) !== null) {
+        addText(text.slice(last, m.index));
+        target.appendChild(buildCodeBlock(m[1], m[2].replace(/\s+$/, "")));
+        last = re.lastIndex;
+    }
+
+    addText(text.slice(last));
+
+    if (!target.childNodes.length) {
+        target.textContent = text;
+    }
+}
+
+
+
+/* =========================================================
+   Add Message
+   ========================================================= */
+
+function addMessage(role, text) {
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "message " + role;
+
+    const avatar = document.createElement("div");
+    avatar.className = "avatar";
+    avatar.textContent = role === "user" ? "OK" : "AI";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+
+    const label = document.createElement("div");
+    label.className = "message-label";
+    label.textContent = role === "user" ? "You" : "AegisOps";
+
+    const content = document.createElement("div");
+    content.className = "message-content";
+
+    if (role === "user") {
+        content.textContent = text;
+    } else {
+        renderContent(content, text);
+    }
+
+    bubble.appendChild(label);
+    bubble.appendChild(content);
+
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(bubble);
+
+    chat.appendChild(wrapper);
+
+    chat.scrollTop = chat.scrollHeight;
+}
+
+
+
+/* =========================================================
+   Send Message
+   ========================================================= */
+
+async function sendMessage() {
+
+    const prompt = promptInput.value.trim();
+
+    if (!prompt) { return; }
+
+    hero.classList.add("hide");
+    chips.classList.add("show");
+
+    addMessage("user", prompt);
+
+    promptInput.value = "";
+    resizeTextarea();
+
+    sendButton.disabled = true;
+    typing.style.display = "flex";
+    chat.scrollTop = chat.scrollHeight;
+
+    try {
+
+        const response = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: prompt })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.agent_error ||
+                data.error ||
+                "The AI request failed."
+            );
+        }
+
+        addMessage("ai", data.agent_response);
+
+    } catch (error) {
+
+        addMessage(
+            "ai",
+            "⚠️ Unable to reach the AI agent.\n\n" + error.message
+        );
+
+    } finally {
+
+        sendButton.disabled = false;
+        typing.style.display = "none";
+        promptInput.focus();
+
+    }
+
+}
+
+
+
+/* =========================================================
+   Keyboard
+   ========================================================= */
+
+function handleKey(event) {
+
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    }
+
+}
+
+
+
+/* =========================================================
+   Example Prompt
+   ========================================================= */
+
+function usePrompt(text) {
+
+    promptInput.value = text;
+    resizeTextarea();
+    promptInput.focus();
+
+}
+
+
+
+/* =========================================================
+   Auto Resize
+   ========================================================= */
+
+function resizeTextarea() {
+
+    promptInput.style.height = "auto";
+    promptInput.style.height = Math.min(promptInput.scrollHeight, 150) + "px";
+
+}
+
+promptInput.addEventListener("input", resizeTextarea);
+
+</script>
+
+</body>
+
+</html>
+

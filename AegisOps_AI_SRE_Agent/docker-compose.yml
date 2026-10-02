@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+
+  # Ollama model server
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+  # Download the model once Ollama is available
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: ollama-init
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "until ollama list >/dev/null 2>&1;
+      do sleep 2;
+      done;
+      ollama pull llama3.2:1b"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: "no"
+
+  # Linux AI Flask application
+  flask-app:
+    image: ozairkhan1/persona-ai-agent:v5
+    container_name: sre-agent
+    ports:
+      - "5001:5000"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=llama3.2:1b
+      - OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp-gateway-prod-ap-south-1.grafana.net/otlp
+      - OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic <YOUR_GRAFANA_OTLP_TOKEN>
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
