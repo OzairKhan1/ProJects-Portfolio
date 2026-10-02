@@ -32,10 +32,10 @@ services:
 
   # Linux AI Flask application
   flask-app:
-    image: ozairkhan1/persona-ai-agent:v5
+    image: ozairkhan1/sre-ai-agent:v5
     container_name: sre-agent
     ports:
-      - "5001:5000"
+      - "5000:5000"
     environment:
       - OLLAMA_HOST=http://ollama:11434
       - OLLAMA_MODEL=llama3.2:1b
