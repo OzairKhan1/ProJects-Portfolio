@@ -2,12 +2,13 @@
 # Most of the Stages are executed on Private Runner and few are on Gitlab-Public Runner 
 
 # ----------------------------------------------------------------------
-#                     HOW TO USE IT
+#                     HOW TO USE IT (Gitlab-Runner Executor Used is : Shell Executor)
 # Just copy the Content and put in .gitlab-ci.yml file inside gitlab Repo and you will be good to go. 
 #---------------------------------------------------------------------
 
 stages:
-  - install_dependencies  # This stage is useful when we have our own runner and we want to install packeages. on Public runner we can make use of built-in services/images 
+  #- Install_Package # this is only required when we use a private-runner 
+  - install_dependencies 
   - secret_scan
   - security_scan
   - docker_build
@@ -32,7 +33,7 @@ install_dependencies:
         echo "Gitleaks already installed: $(gitleaks version)"
       else
         echo "Gitleaks not found. Installing..."
-        curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/scripts/install.sh | sh -s -- -b /usr/local/bin
+        sudo apt install -y gitleaks
         echo "Gitleaks installed: $(gitleaks version)"
       fi 
 
@@ -41,19 +42,14 @@ install_dependencies:
       if command -v docker >/dev/null 2>&1; then
         echo "Docker already installed: $(docker --version)"
       else
-        echo "Docker not found. Installing..."
-        sudo apt-get update
-        sudo apt-get install -y docker.io
-        sudo systemctl enable --now docker
-        sudo usermod -aG docker $USER && newgrp docker
-        sudo chmod 666 /var/run/docker.sock
-        sudo usermod -aG docker gitlab-runner && newgrp docker
-        echo "Docker installed $(docker --version)"
+        echo "Docker not found. Installing from repository script..."
+        chmod +x install_docker.sh
+        ./install_docker.sh
       fi
 
     #3. Check / install Docker Compose
     - |
-      if  command -v docker-compose >/dev/null 2>&1 >/dev/null 2>&1; then
+      if docker compose version >/dev/null 2>&1; then
         echo "Docker Compose already installed $(docker compose --version)"
       else
         echo "Docker Compose not found. Installing from repository script..."
@@ -64,8 +60,7 @@ install_dependencies:
         echo "Docker Compose installed:"
         echo docker compose version
       fi
-  tags:
-    - dev-runner
+  
  
  
 secret_scan:  
