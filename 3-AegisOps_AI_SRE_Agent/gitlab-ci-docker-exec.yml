@@ -1,3 +1,8 @@
+# This is the same pipeline but using " Docke-Executor ' on the Private Runner. Just launch gitlab-runner with name "docker-runner" and run the pipeline
+# One More Update in " config.toml " file to add  "unix:///var/run/docker.sock" as a Volume for Runner .
+# The Pipeline Uses the Host Docker-Deamon and Image with docker-cli in it. 
+
+
 stages:
   - secret_scan
   - security_scan
