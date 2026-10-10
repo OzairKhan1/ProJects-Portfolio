@@ -160,8 +160,11 @@ update-docker-compose-yml:
 
 deploy-to-ec2:
   stage: deploy-to-ec2
+  before_script:
+    - apk add --no-cache git
   script:
-    - echo "Deploying to Server"
-    - docker compose up -d 
-  tags:
-    - dev-runner
+    # Deploy using the Compose file updated in the previous stage.
+    - git clone "https://${MANIFEST_USER}:${MANIFEST_TOKEN}@github.com/OzairKhan1/Kubernetes-ManifestFiles.git"
+    - cd Kubernetes-ManifestFiles/AegisOps_AI_SRE_Agen
+    - docker compose version
+    - docker compose up -d
