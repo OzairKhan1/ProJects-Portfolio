@@ -1,0 +1,106 @@
+stages:
+  - secret_scan
+  - security_scan
+  - docker_build
+  - trivy_image_scan
+  - docker_push
+  - update_manifests
+  - deploy-to-ec2
+
+variables:
+  IMAGE: "ai-sre-agent"
+  DOCKER_HOST: "unix:///var/run/docker.sock"
+
+# All jobs use the Docker executor. The docker-runner must be registered
+# with this tag, and its config.toml must mount /var/run/docker.sock.
+default:
+  tags:
+    - docker-runner
+
+secret_scan:
+  stage: secret_scan
+  image:
+    name: zricethezav/gitleaks:latest
+    entrypoint: [""]
+  script:
+    - gitleaks version
+    - gitleaks detect --source . --verbose --redact
+
+trivy_fs:
+  stage: security_scan
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  script:
+    - trivy fs --scanners vuln,secret .
+
+docker_build:
+  stage: docker_build
+  image: docker:cli
+  script:
+    - docker version
+    - cd DkrFiles
+    - docker build -t "$DOCKER_HUB_USERNAME/$IMAGE:gitlab.${CI_PIPELINE_IID}" .
+    - docker save "$DOCKER_HUB_USERNAME/$IMAGE:gitlab.${CI_PIPELINE_IID}" -o ../image.tar
+  artifacts:
+    paths:
+      - image.tar
+    expire_in: 1 hour
+
+trivy_image_scan:
+  stage: trivy_image_scan
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  needs:
+    - job: docker_build
+      artifacts: true
+  script:
+    - echo "Scanning Docker image artifact..."
+    - trivy image --input image.tar --severity HIGH,CRITICAL --exit-code 0 --no-progress
+
+docker_push:
+  stage: docker_push
+  image: docker:cli
+  needs:
+    - job: docker_build
+      artifacts: true
+  script:
+    - docker version
+    - docker load -i image.tar
+    - echo "DockerHub Username is $DOCKER_HUB_USERNAME"
+    - echo "$DOCKER_HUB_PASSWD" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
+    - docker push "$DOCKER_HUB_USERNAME/$IMAGE:gitlab.$CI_PIPELINE_IID"
+    - docker logout
+
+update-docker-compose-yml:
+  stage: update_manifests
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache git
+  script:
+    - git clone "https://${MANIFEST_USER}:${MANIFEST_TOKEN}@github.com/OzairKhan1/Kubernetes-ManifestFiles.git"
+    - cd Kubernetes-ManifestFiles
+    - |
+      sed -i "s#image: ${DOCKER_HUB_USERNAME}/${IMAGE}:.*#image: ${DOCKER_HUB_USERNAME}/${IMAGE}:gitlab.${CI_PIPELINE_IID}#g" \
+        AegisOps_AI_SRE_Agen/docker-compose.yml
+    - git config user.name "GitLab CI"
+    - git config user.email "gitlab-ci@example.com"
+    - git add AegisOps_AI_SRE_Agen/docker-compose.yml
+    - git commit -m "Update image to gitlab.${CI_PIPELINE_IID}" || echo "No changes to commit"
+    - git push origin main
+    - echo "The GitHub repository was successfully updated!"
+
+deploy-to-ec2:
+  stage: deploy-to-ec2
+  image: docker:cli
+  before_script:
+    - apk add --no-cache git
+  script:
+    - docker version
+    # Deploy using the Compose file updated in the previous stage.
+    - git clone "https://${MANIFEST_USER}:${MANIFEST_TOKEN}@github.com/OzairKhan1/Kubernetes-ManifestFiles.git"
+    - cd Kubernetes-ManifestFiles/AegisOps_AI_SRE_Agen
+    - docker compose version
+    - docker compose pull
+    - docker compose up -d
