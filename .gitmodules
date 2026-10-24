@@ -1,0 +1,3 @@
+[submodule "11-MicroServices-K8s-Deploy"]
+	path = 11-MicroServices-K8s-Deploy
+	url = https://github.com/OzairKhan1/DevSecOps.git
